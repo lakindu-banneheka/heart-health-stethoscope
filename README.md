@@ -1,38 +1,9 @@
 # AI‑Driven Heart Health Monitoring System *Custom‑Built Digital Stethoscope*
 
-[![CI](https://img.shields.io/github/actions/workflow/status/<USER>/heart-health-stethoscope/test.yml?label=CI)](../../actions)
-[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://<USER>.github.io/heart-health-stethoscope)
-[![License](https://img.shields.io/github/license/<USER>/heart-health-stethoscope)](LICENSE)
-[![DVC‑Data](https://img.shields.io/badge/dataset-DVC‑tracked-green)](data/)
-
 <img width="1379" height="626" alt="frontend-interface" src="https://github.com/user-attachments/assets/e6a75deb-2224-4f01-b88d-4843ed3b1ae5" />
-<img width="575" height="179" alt="data-loading-and-processing-flow" src="https://github.com/user-attachments/assets/7a39b520-96ee-4f89-b4b7-01b27dda473b" />
-<img width="575" height="416" alt="prob-in-use" src="https://github.com/user-attachments/assets/f098614f-b07d-4c75-94de-ae5c28c277f0" />
 
 
-
-A **full‑stack, open‑hardware** toolkit for **non‑invasive cardiac auscultation and AI‑assisted disease screening**.  The project spans **3‑D‑printed hardware**, a **Residual‑CRNN** built in TensorFlow/ONNX, a **FastAPI** inference service, and a **Next.js** web client capable of real‑time waveform visualisation.  Target latency: **< 150 ms**; Macro‑F1 ≥ **0.90** across *normal*, *murmur*, and *artifact* PCG classes.
-
----
-
-## Table of Contents
-
-1. [Key Features](#key-features)
-2. [Tech Stack](#tech-stack)
-3. [Directory Layout](#directory-layout)
-4. [Local Quick‑Start](#local-quick-start)
-5. [Configuration](#configuration)
-6. [REST API](#rest-api)
-7. [Dataset & Weights](#dataset--weights)
-8. [Train & Evaluate](#train--evaluate)
-9. [Benchmark Results](#benchmark-results)
-10. [Hardware Build Guide](#hardware-build-guide)
-11. [Production Deployment](#production-deployment)
-12. [Docs & Slides](#docs--slides)
-13. [Contributing](#contributing)
-14. [License & Citation](#license--citation)
-15. [Roadmap](#roadmap)
-16. [Acknowledgements](#acknowledgements)
+A **full‑stack, open‑hardware** toolkit for **non‑invasive cardiac auscultation and AI‑assisted disease screening**.  The project spans **3D‑printed hardware**, a **Residual‑CRNN** built in TensorFlow, a **FastAPI** inference service, and a **Next.js** web client capable of real‑time waveform visualisation.  Target latency: **< 150 ms**; Macro‑F1 ≥ **0.90** across *normal*, *murmur*, and *artifact* PCG classes.
 
 ---
 
@@ -52,14 +23,13 @@ A **full‑stack, open‑hardware** toolkit for **non‑invasive cardiac auscult
 
 | Layer       | Technology                                  |
 | ----------- | ------------------------------------------- |
-| Hardware    | ESP32‑WROOM‑32D, MAX9814, 3‑D‑printed probe |
-| ML Training | TensorFlow 2.16, ONNX 1.17, CUDA 12         |
-| Backend     | FastAPI, Pydantic, ONNX Runtime             |
-| Frontend    | React 18 + Next.js 14, Tailwind CSS, SWR    |
-| Data Ops    | DVC, MLflow                                 |
-| DevOps      | Docker, GitHub Actions, Terraform, Nginx    |
+| Hardware    | 3D‑printed probe                            |
+| ML Training | TensorFlow                                  |
+| Backend     | FastAPI                                     |
+| Frontend    | React 18 + Next.js 14, Tailwind CSS,        |
+| DevOps      | Docker, GitHub Actions, Nginx               |
 
-![High‑level system architecture](docs/figures/architecture_overview.png)
+<img width="494" height="290" alt="end-to-end-deployment-pipeline" src="https://github.com/user-attachments/assets/6e33620e-97d7-441f-bab1-1de0a1972266" />
 
 ---
 
@@ -67,67 +37,17 @@ A **full‑stack, open‑hardware** toolkit for **non‑invasive cardiac auscult
 
 ```text
 heart-health-stethoscope/
-├── docs/               ← MkDocs site (background, methodology, results)
+├── docs/               ← MkDocs site (results)
 ├── data/               ← DVC pointers; ≤10 anonymised WAVs only
 ├── notebooks/          ← Jupyter exploration (ordered 00-, 01-, …)
-├── src/
-│   ├── heart_sound_ml/ ← Python package (preprocess, model, train, eval)
-│   └── tests/          ← pytest unit tests (≈85 % coverage)
-├── models/             ← Versioned .onnx + .md5, tracked via Git LFS
+├── models/             ← Versioned .md5, .keras
 ├── hardware/
 │   ├── cad/            ← .stl / .step
-│   ├── renders/        ← PNGs for README badges
-│   ├── schematics.pdf  ← KiCad wiring & PCB Gerbers
-│   └── calibration.md  ← SPL calibration & filter settings
+│   └── renders/        ← PNGs
 ├── webapp/
 │   ├── backend/        ← FastAPI service + Dockerfile
 │   └── frontend/       ← Next.js client + Tailwind config
-├── deployment/
-│   ├── docker-compose.yml
-│   ├── nginx.conf
-│   ├── terraform/      ← IaC scripts (optional AWS deploy)
-│   └── github-workflows/
-└── papers/             ← Thesis pre‑print, conference poster
-```
-
----
-
-## Local Quick‑Start
-
-```bash
-# 0. Prereqs: git ≥2.40, Python ≥3.11, Node ≥20, Docker ≥24
-
-# 1. Clone & create Python env
-$ git clone https://github.com/<USER>/heart-health-stethoscope.git
-$ cd heart-health-stethoscope
-$ python -m venv .venv && source .venv/bin/activate
-$ pip install -r requirements.txt          # meta‑reqs tox & pre‑commit
-
-# 2. Install backend deps & run tests
-$ tox -e backend
-
-# 3. Front‑end dev server
-$ cd webapp/frontend && npm i && npm run dev
-
-# 4. End‑to‑end via Docker Compose
-$ docker compose up --build -d      # http://localhost:3000
-```
-
----
-
-## Configuration
-
-Copy `.env.example` → `.env` and set:
-
-```env
-# ⬇ FastAPI
-API_HOST=0.0.0.0
-API_PORT=8080
-MODEL_PATH=/models/rcnn_v1.onnx
-CORS_ORIGINS=http://localhost:3000
-
-# ⬇ Next.js client
-NEXT_PUBLIC_API_URL=http://localhost:8080
+└── papers/             ← Thesis pre‑print
 ```
 
 ---
@@ -136,9 +56,8 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 
 | Method | Endpoint   | Payload (JSON / multipart)      | Returns                                |
 | ------ | ---------- | ------------------------------- | -------------------------------------- |
-| POST   | `/predict` | `{ "file": <WAV>, "sr":22050 }` | `{ "class":"murmur", "proba":0.91 }`   |
+| POST   | `/predict` | `{ "file": <WAV> }`             | `{ "class":"murmur", "proba":0.91 }`   |
 | GET    | `/health`  | –                               | `200 OK`                               |
-| GET    | `/version` | –                               | `{ "model":"rcnn_v1", "git":"<hash>"}` |
 
 Live Swagger docs on `http://localhost:8080/docs`.
 
@@ -167,46 +86,26 @@ Dataset summary:
 | Val   | 429       | 23             | —                        |
 | Test  | 648       | 34             | —                        |
 
-Ethical clearance letter in `docs/ethics/clearance‑2025‑06.pdf`.
-
 ---
 
 ## Train & Evaluate
 
-```bash
-$ python src/heart_sound_ml/train.py \
-        --config configs/resnet_crnn.yaml \
-        --mlflow_uri mlruns/                                   
+<img width="518" height="219" alt="confusion-matrix" src="https://github.com/user-attachments/assets/d659e2ca-91ea-4734-b81f-26f7f0481724" />
 
-# Evaluate ONNX weights
-$ python -m heart_sound_ml.eval --weights models/rcnn_v1.onnx
-```
-
-All experiments logged to MLflow and summarised in `docs/results.md`.
+<img width="432" height="202" alt="lurning-curve" src="https://github.com/user-attachments/assets/d21148e4-65f2-43bd-84d1-171d04527615" />
 
 ---
 
 ## Benchmark Results
 
-| Metric            | Value     | Hardware                     |
-| ----------------- | --------- | ---------------------------- |
-| F1‑macro          | **0.912** | GTX 1650 (train)             |
-| ROC‑AUC           | 0.941     | –                            |
-| Inference latency | 58 ms     | Raspberry Pi 4 (4 × 1.5 GHz) |
-| Model size        | 3.1 MB    | ONNX (quantised int8)        |
-
-See full ablation table in `docs/results.md`.
+| Metric            | Value     |
+| ----------------- | --------- |
+| F1‑macro          | **0.89** |
+| Model size        | 11.4 MB    |
 
 ---
 
-## Hardware Build Guide
+## Hardware Build
 
-![Render of the 3‑D‑printed probe and MAX9814 pre‑amp](hardware/renders/probe_v3_render.png)
+![parts-of prob](https://github.com/user-attachments/assets/849b6f79-ae34-47cb-bf91-731eabc0b71e)
 
-1. Print `hardware/cad/probe_v3.stl` (PLA, 0.2 mm layer, 15 % infill).
-2. Assemble MEMS mic → MAX9814 → ESP32 per `schematics.pdf`; use shielded cables.
-3. Flash ESP32 with `hardware/firmware/pcg_streamer.ino`.
-4. Calibrate gain via white‑noise sweep (`calibration.md`).
-5. (Optional) Add silicone gasket for chest‑piece seal — improves SNR ≈ 6 dB.
-
-Bill‑
